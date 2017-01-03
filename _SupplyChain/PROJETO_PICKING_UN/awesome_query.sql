@@ -25,7 +25,7 @@
 		,FLG_PICKING_UN INT
 		,QTD_PEDIDO NUMERIC(18,3)
 		,QTD_EMB_FORN NUMERIC(18,3)
-		,VLR_MULTIPLO_FORN NUMERIC(18,3)
+		,QTD_MULTIPLO_FORN NUMERIC(18,3)
 		,QTD_PEDIDO_RMV NUMERIC(18,3)
 		,QTD_PEDIDO_ADD NUMERIC(18,3)
 		,QTD_PEDIDO_NEW NUMERIC(18,3)
@@ -40,7 +40,7 @@
 			,P.FLG_COMPRA as FLG_PICKING_UN
 			,P.QTD_EMBALAGEM as QTD_PEDIDO
 			,P.QTD_EMB_ORG as QTD_EMB_FORN
-			,P.VLR_MULTIPLO	 as VLR_MULTIPLO_FORN
+			,P.VLR_MULTIPLO	 as QTD_MULTIPLO_FORN
 			,NULL AS QTD_PEDIDO_RMV
 			,NULL AS QTD_PEDIDO_ADD
 			,NULL AS QTD_PEDIDO_NEW
@@ -68,13 +68,13 @@
 		COD_PRODUTO INT		
 		,QTD_PEDIDO NUMERIC(18,3)
 		,QTD_EMB_FORN NUMERIC(18,3)
-		,VLR_MULTIPLO_FORN NUMERIC(18,3)
+		,QTD_MULTIPLO_FORN NUMERIC(18,3)
 		
 		,FLG_QTD_EMB INT
 		,MOD_QTD_EMB NUMERIC(18,3)
 		,DIV_QTD_EMB NUMERIC(18,3)
 		
-		,FLG_VLR_MULTIPLO INT
+		,FLG_QTD_MULTIPLO INT
 		,MOD_VLR_MULTIPLO NUMERIC(18,3)
 		,DIV_VLR_MULTIPLO NUMERIC(18,3)	
 		
@@ -87,13 +87,13 @@
 			COD_PRODUTO
 			,SUM(QTD_PEDIDO) AS SUM_QTD_PEDIDO
 			,QTD_EMB_FORN
-			,VLR_MULTIPLO_FORN			
+			,QTD_MULTIPLO_FORN			
 			,NULL AS FLG_QTD_EMB
 			,SUM(QTD_PEDIDO) % QTD_EMB_FORN AS MOD_QTD_EMB
 			,SUM(QTD_PEDIDO) / QTD_EMB_FORN AS DIV_QTD_EMB
-			,NULL AS FLG_VLR_MULTIPLO
-			,SUM(QTD_PEDIDO) % VLR_MULTIPLO_FORN AS MOD_VLR_MULTIPLO
-			,SUM(QTD_PEDIDO) / VLR_MULTIPLO_FORN AS DIV_VLR_MULTIPLO	
+			,NULL AS FLG_QTD_MULTIPLO
+			,SUM(QTD_PEDIDO) % QTD_MULTIPLO_FORN AS MOD_VLR_MULTIPLO
+			,SUM(QTD_PEDIDO) / QTD_MULTIPLO_FORN AS DIV_VLR_MULTIPLO	
 			,NULL AS FLG_ARREDONDAR_PED
 			,NULL AS QTD_PEDIDO_RMV
 			,NULL AS QTD_PEDIDO_ADD
@@ -102,7 +102,7 @@
 		GROUP BY
 			COD_PRODUTO
 			,QTD_EMB_FORN
-			,VLR_MULTIPLO_FORN	
+			,QTD_MULTIPLO_FORN	
 
 -- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- MARCAR SE VAI OU NÃO ARREDONDAR E DEFINIR QUANTIDADES PARA ADD OU RMV
@@ -129,18 +129,18 @@
 				AND DIV_QTD_EMB < 1
 			
 			-- ------------------
-			-- FLG_VLR_MULTIPLO
+			-- FLG_QTD_MULTIPLO
 			-- ------------------
 			UPDATE TCQ
 			SET
-				FLG_VLR_MULTIPLO = 1
+				FLG_QTD_MULTIPLO = 1
 				,FLG_ARREDONDAR_PED = (CASE WHEN DIV_VLR_MULTIPLO < @packRoundLimit THEN 0 ELSE 1 END)
 			FROM
 				@TAB_CHECK_QTD as TCQ
 			WHERE 1=1
 				AND QTD_EMB_FORN = 1
-				AND VLR_MULTIPLO_FORN <> 1
-				AND QTD_PEDIDO % VLR_MULTIPLO_FORN <> 0
+				AND QTD_MULTIPLO_FORN <> 1
+				AND QTD_PEDIDO % QTD_MULTIPLO_FORN <> 0
 				AND DIV_VLR_MULTIPLO < 1		
 		
 		-- ------------------------------------------------------------------------------------------------------------
@@ -177,15 +177,15 @@
 					AND DIV_QTD_EMB < 1
 				
 				-- ------------------
-				-- FLG_VLR_MULTIPLO
+				-- FLG_QTD_MULTIPLO
 				-- ------------------
 				UPDATE TCQ
 				SET
-					TCQ.QTD_PEDIDO_ADD = TCQ.VLR_MULTIPLO_FORN - TCQ.QTD_PEDIDO
+					TCQ.QTD_PEDIDO_ADD = TCQ.QTD_MULTIPLO_FORN - TCQ.QTD_PEDIDO
 				FROM
 					@TAB_CHECK_QTD as TCQ
 				WHERE 1=1
-					AND FLG_VLR_MULTIPLO = 1
+					AND FLG_QTD_MULTIPLO = 1
 					AND FLG_ARREDONDAR_PED = 1
 					AND DIV_VLR_MULTIPLO < 1
 			
@@ -211,18 +211,18 @@
 				AND DIV_QTD_EMB > 1
 		
 			-- ------------------
-			-- FLG_VLR_MULTIPLO
+			-- FLG_QTD_MULTIPLO
 			-- ------------------
 			UPDATE TCQ
 			SET
-				FLG_VLR_MULTIPLO = 1
-				,FLG_ARREDONDAR_PED = (CASE WHEN (QTD_PEDIDO % VLR_MULTIPLO_FORN) / VLR_MULTIPLO_FORN  < @packRoundLimit THEN 0 ELSE 1 END)
+				FLG_QTD_MULTIPLO = 1
+				,FLG_ARREDONDAR_PED = (CASE WHEN (QTD_PEDIDO % QTD_MULTIPLO_FORN) / QTD_MULTIPLO_FORN  < @packRoundLimit THEN 0 ELSE 1 END)
 			FROM
 				@TAB_CHECK_QTD as TCQ
 			WHERE 1=1
 				AND QTD_EMB_FORN = 1
-				AND VLR_MULTIPLO_FORN <> 1
-				AND QTD_PEDIDO % VLR_MULTIPLO_FORN <> 0
+				AND QTD_MULTIPLO_FORN <> 1
+				AND QTD_PEDIDO % QTD_MULTIPLO_FORN <> 0
 				AND DIV_VLR_MULTIPLO > 1
 	
 		-- ------------------------------------------------------------------------------------------------------------
@@ -245,15 +245,15 @@
 					AND DIV_QTD_EMB > 1
 				
 				-- ------------------
-				-- FLG_VLR_MULTIPLO
+				-- FLG_QTD_MULTIPLO
 				-- ------------------
 				UPDATE TCQ
 				SET
-					TCQ.QTD_PEDIDO_RMV = (QTD_PEDIDO % VLR_MULTIPLO_FORN)
+					TCQ.QTD_PEDIDO_RMV = (QTD_PEDIDO % QTD_MULTIPLO_FORN)
 				FROM
 					@TAB_CHECK_QTD as TCQ
 				WHERE 1=1
-					AND FLG_VLR_MULTIPLO = 1
+					AND FLG_QTD_MULTIPLO = 1
 					AND FLG_ARREDONDAR_PED = 0
 					AND DIV_VLR_MULTIPLO > 1
 			
@@ -274,15 +274,15 @@
 					AND DIV_QTD_EMB > 1
 				
 				-- ------------------
-				-- FLG_VLR_MULTIPLO
+				-- FLG_QTD_MULTIPLO
 				-- ------------------
 				UPDATE TCQ
 				SET
-					TCQ.QTD_PEDIDO_ADD = (QTD_PEDIDO % VLR_MULTIPLO_FORN)
+					TCQ.QTD_PEDIDO_ADD = (QTD_PEDIDO % QTD_MULTIPLO_FORN)
 				FROM
 					@TAB_CHECK_QTD as TCQ
 				WHERE 1=1
-					AND FLG_VLR_MULTIPLO = 1
+					AND FLG_QTD_MULTIPLO = 1
 					AND FLG_ARREDONDAR_PED = 1
 					AND DIV_VLR_MULTIPLO > 1
 				
@@ -464,7 +464,21 @@
 -- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- MONTAR UPDATE NA COMPRAS_PEDIDOS
 -- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+	SELECT *
+	--UPDATE P
+	--SET
+	--	P.QTD_EMBALAGEM = TBP.QTD_PEDIDO_NEW
+	FROM
+		@TAB_BASE_PICKING AS TBP
+		INNER JOIN BI.dbo.COMPRAS_PEDIDOS as P
+			ON 1=1
+			AND TBP.ID_SIMULADO = P.ID_SIMULADO
+			AND TBP.COD_LOJA = P.COD_LOJA
+			AND TBP.COD_PRODUTO = P.COD_PRODUTO
+	WHERE 1=1
+		AND TBP.QTD_PEDIDO_NEW <> TBP.QTD_PEDIDO
+	
+	
 	SELECT *
 	FROM
 		@TAB_BASE_PICKING AS TBP
@@ -478,20 +492,20 @@
 -- TESTING
 -- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
 	-- --------------------------------------------------
-	-- FLG_VLR_MULTIPLO = 1
+	-- FLG_QTD_MULTIPLO = 1
 	-- --------------------------------------------------
 	SELECT
 		COD_PRODUTO
 		,QTD_PEDIDO
 		,QTD_EMB_FORN
-		,VLR_MULTIPLO_FORN
+		,QTD_MULTIPLO_FORN
 		,MOD_VLR_MULTIPLO
 		,DIV_VLR_MULTIPLO
 		,FLG_ARREDONDAR_PED
 	FROM
 		@TAB_CHECK_QTD as TCQ
 	WHERE 1=1
-		AND FLG_VLR_MULTIPLO = 1
+		AND FLG_QTD_MULTIPLO = 1
 	
 	-- --------------------------------------------------
 	-- FLG_QTD_EMB = 1
@@ -500,7 +514,7 @@
 		COD_PRODUTO
 		,QTD_PEDIDO
 		,QTD_EMB_FORN
-		,VLR_MULTIPLO_FORN
+		,QTD_MULTIPLO_FORN
 		,MOD_QTD_EMB
 		,DIV_QTD_EMB
 		,FLG_ARREDONDAR_PED
