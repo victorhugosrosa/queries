@@ -1,0 +1,26 @@
+DECLARE @DATA_INI AS DATE = '20140501'
+DECLARE @DATA_FIM AS DATE = '20140531'
+
+SELECT 
+	 'NF' + DET.[NUM_DANFE] as [Danfe]			
+	,CF.DES_FANTASIA as [Forn] 
+	,DET.[Cod_fornecedor] AS [Cod Forn]
+	,DET.[COD_LOJA] as [Loja]	
+	,IDE.dEmi AS [Data Emissao]
+	,BI.dbo.fn_FormataVlr_Excel(SUM(DET.vProd)) AS [Valor]
+	,isnull((SELECT TOP 1 'Recebido' FROM [192.168.0.6].[INTRANET].[DBO].[TAB_RECEB_MERCADORIA] AS REC WHERE REC.DAMFE COLLATE Latin1_General_CI_AS = DET.NUM_DANFE),'Pendente') as Recebido
+FROM
+	[CTRLNFE].[DBO].[NFE_DET] AS DET
+		LEFT JOIN [CtrlNfe].[dbo].[NFE_IDE] AS IDE ON (DET.num_danfe = IDE.num_danfe)
+		LEFT JOIN [CtrlNfe].[dbo].[NFE_COBR] AS COBR ON (DET.num_danfe = COBR.num_danfe)
+		LEFT JOIN BI.DBO.BI_CAD_FORNECEDOR AS CF ON (DET.Cod_fornecedor = CF.Cod_fornecedor)
+WHERE 1 = 1
+	AND CONVERT(DATE,DET.DTA_GRAVACAO) BETWEEN CONVERT(DATE,@DATA_INI) AND CONVERT(DATE,@DATA_FIM)
+	AND DET.COD_LOJA IN (21)
+	AND DET.Cfop IN (1910,2910,5910)
+GROUP BY
+	DET.[NUM_DANFE]	
+	,CF.DES_FANTASIA
+	,DET.[Cod_fornecedor]
+	,DET.[COD_LOJA]	
+	,IDE.dEmi

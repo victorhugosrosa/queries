@@ -1,0 +1,8 @@
+select top 10
+	*
+from
+	DW.DBO.BI_ANAL_MOVTO_CAIXA AS C
+	INNER JOIN [DW].[dbo].[FORMAS_PGTO] AS FP
+		ON 1=1
+		AND C.COD_LOJA = FP.COD_LOJA
+		AND C.FINALIZADORA = FP.cod_finalizadora

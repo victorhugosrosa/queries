@@ -1,0 +1,4 @@
+update BI.dbo.COMPRAS_ESTATISTICA_PRODUTO_FLV
+set
+	AVG_QTD_VENDA = AVG_QTD_VENDA*2
+where cod_loja = 3 and DIA_SEMANA = 5

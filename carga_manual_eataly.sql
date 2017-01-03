@@ -1,0 +1,23 @@
+/*
+update BI_VENDA_CUPOM set VALOR_TOTAL = 5699.43
+where COD_LOJA = 33 and convert(date,data) = '20150526' and TIPO = 108
+
+INSERT INTO [BI].[dbo].BI_VENDA_CUPOM ([COD_LOJA],[DATA],TIPO,[QTDE_CUPOM],[VALOR_TOTAL],[CUPOM_MEDIO])	values (33,'2015-05-26',102,1,42334.19,1)
+INSERT INTO [BI].[dbo].BI_VENDA_CUPOM ([COD_LOJA],[DATA],TIPO,[QTDE_CUPOM],[VALOR_TOTAL],[CUPOM_MEDIO])	values (33,'2015-05-26',115,1,4195.70,1)
+INSERT INTO [BI].[dbo].BI_VENDA_CUPOM ([COD_LOJA],[DATA],TIPO,[QTDE_CUPOM],[VALOR_TOTAL],[CUPOM_MEDIO])	values (33,'2015-05-26',116,1,4620.14,1)
+
+select * from BI_VENDA_CUPOM 
+where COD_LOJA = 33 and convert(date,data) = '20150526' and TIPO = 101ç
+
+
+delete from BI_VENDA_CUPOM 
+where COD_LOJA = 33 and convert(date,data) = '20150527' 
+*/
+
+
+UPDATE
+BI_VENDA_CUPOM 
+SET
+	QTDE_CUPOM = 1
+	,CUPOM_MEDIO = 1
+where COD_LOJA = 33 and convert(date,data) = '20150526' and QTDE_CUPOM = 0

@@ -1,0 +1,11 @@
+SELECT
+	COD_LOJA
+	,DATA
+	,BI.dbo.fn_FormataVlr_Excel(CREDITO_META) AS CREDITO_META
+	,BI.dbo.fn_FormataVlr_Excel(CREDITO_REAL) AS CREDITO_REAL
+	,BI.dbo.fn_FormataVlr_Excel(CREDITO_REAL-CREDITO_META) AS [Credito Real - Projetado]
+	,BI.dbo.fn_FormataVlr_Excel(VOUCHER_META) AS VOUCHER_META
+	,BI.dbo.fn_FormataVlr_Excel(VOUCHER_REAL) AS VOUCHER_REAL
+	,BI.dbo.fn_FormataVlr_Excel(VOUCHER_REAL-VOUCHER_META) AS [Voucher Real - Projetado]
+FROM [BI].[dbo].[FIN_FLUXO_RECEBIVEL] WHERE 1=1
+AND CONVERT(DATE,DATA) BETWEEN CONVERT(DATE,'2016-01-27') AND CONVERT(DATE,'2016-02-29')

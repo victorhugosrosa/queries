@@ -1,0 +1,85 @@
+DECLARE @DATA_INI AS DATE = '20150101'
+DECLARE @DATA_FIM AS DATE = '20150305'
+
+-- ----------------------------------------------------------------------------------------------------------------------------------------
+-- 
+-- ----------------------------------------------------------------------------------------------------------------------------------------
+SELECT
+	VP.COD_LOJA
+	,L.NO_LOJA
+	,CP.PNP
+	,CP.NO_DEPARTAMENTO
+	,CP.NO_SECAO
+	,CP.NO_GRUPO
+	,CP.COD_PRODUTO
+	,CP.DESCRICAO AS NO_PRODUTO
+	,BI.dbo.fn_FormataVlr_Excel(SUM(VP.VALOR_TOTAL)) AS VLR_VENDA
+	,BI.dbo.fn_FormataVlr_Excel(SUM(VP.QTDE_PRODUTO)) AS QTD_VENDA
+FROM
+	BI.DBO.BI_VENDA_PRODUTO AS VP
+	INNER JOIN BI.DBO.BI_CAD_PRODUTO AS CP
+		ON 1=1
+		AND VP.COD_PRODUTO = CP.COD_PRODUTO
+	INNER JOIN BI.dbo.BI_CAD_LOJA2 AS L
+		ON 1=1
+		AND VP.COD_LOJA = L.COD_LOJA
+WHERE 1=1
+	AND CONVERT(DATE,VP.DATA) BETWEEN CONVERT(DATE,@DATA_INI) AND CONVERT(DATE,@DATA_FIM)
+	AND VP.COD_LOJA = 31
+	AND CP.COD_DEPARTAMENTO = 21
+GROUP BY
+	VP.COD_LOJA
+	,L.NO_LOJA
+	,CP.PNP
+	,CP.NO_DEPARTAMENTO
+	,CP.NO_SECAO
+	,CP.NO_GRUPO
+	,CP.COD_PRODUTO
+	,CP.DESCRICAO
+	
+-- ----------------------------------------------------------------------------------------------------------------------------------------
+-- 
+-- ----------------------------------------------------------------------------------------------------------------------------------------	
+	SELECT
+		P.COD_LOJA
+		,(CASE
+			WHEN P.[TIPO_RECEBIMENTO] = 1 THEN 'Parcial'
+			WHEN P.[TIPO_RECEBIMENTO] = 0 THEN 'Pendente'
+			WHEN P.[TIPO_RECEBIMENTO] = 2 THEN 'Total'
+		END) AS TIPO
+		,PROD.PNP
+		,PROD.NO_DEPARTAMENTO
+		,PROD.NO_SECAO
+		,PROD.NO_GRUPO
+		,PROD.COD_PRODUTO
+		,PROD.DESCRICAO AS NO_PRODUTO
+		,SUM(PP.QTD_PEDIDO) as [Qtd Ped]
+		,SUM(PP.VAL_TABELA*PP.QTD_PEDIDO) AS [Vlr Total]
+		
+		--,USR.NO_COMPRADOR  AS [Comprador]--USR.DES_NOME 
+	FROM
+		[192.168.0.6].[ZEUS_RTG].DBO.[TAB_PEDIDO] AS P INNER JOIN [192.168.0.6].[ZEUS_RTG].DBO.[TAB_PEDIDO_PRODUTO] AS PP
+			ON 1=1
+			AND P.NUM_PEDIDO = PP.NUM_PEDIDO
+			AND P.COD_LOJA = PP.COD_LOJA
+			AND P.COD_PARCEIRO = PP.COD_PARCEIRO
+			AND P.COD_USUARIO = P.COD_USUARIO
+			INNER JOIN BI.dbo.BI_CAD_PRODUTO AS PROD ON (PP.COD_PRODUTO = PROD.COD_PRODUTO)
+	WHERE 1 = 1
+		AND CONVERT(DATE,P.DTA_EMISSAO) BETWEEN CONVERT(DATE,@DATA_INI) AND CONVERT(DATE,@DATA_FIM)
+		AND P.COD_LOJA = 31
+		AND PROD.COD_DEPARTAMENTO = 21
+	GROUP BY
+		P.COD_LOJA
+		,(CASE
+			WHEN P.[TIPO_RECEBIMENTO] = 1 THEN 'Parcial'
+			WHEN P.[TIPO_RECEBIMENTO] = 0 THEN 'Pendente'
+			WHEN P.[TIPO_RECEBIMENTO] = 2 THEN 'Total'
+		END) 
+		,PROD.PNP
+		,PROD.NO_DEPARTAMENTO
+		,PROD.NO_SECAO
+		,PROD.NO_GRUPO
+		,PROD.COD_PRODUTO
+		,PROD.DESCRICAO
+	

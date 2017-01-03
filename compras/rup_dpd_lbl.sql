@@ -1,0 +1,73 @@
+declare @dataIni [varchar](8) = '20131103'
+declare @dataFim [varchar](8) = '20131103'
+
+
+--EXEC [QW_CARGA_LINHA_MOVIMENTO_DIA] @dataIni,@dataFim;
+
+-- ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- RUPTURA/DPD
+-- ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+SELECT
+	LINHA.COD_LOJA
+	,CL.DESCRICAO
+	,LINHA.COD_PRODUTO
+	,LINHA.COD_SECAO
+	,CP.NO_SECAO
+	,ISNULL(MOV.QTD_ESTOQUE,0) AS QTD_ESTOQUE
+	,ISNULL(MOV.RUPTURA,1) AS RUPTURA
+	,CAST((EST.AVG_QTD_VENDA*PL.VAL_VENDA)/7 AS FLOAT) AS AVG_VLR_VENDA
+	,PL.VAL_VENDA
+	,sum(TAB_LB.LUCRO_BRUTO) as LUCRO_BRUTO
+	,SUM(TAB_LB.VENDA) AS VENDA
+FROM 
+	BI.DBO.BI_TESTE_LINHA_PRODUTOS AS LINHA LEFT JOIN BI.DBO.BI_TESTE_MOVIMENTO_PRODUTOS AS MOV ON (LINHA.COD_LOJA = MOV.COD_LOJA AND LINHA.COD_PRODUTO = MOV.COD_PRODUTO)
+		LEFT JOIN BI.DBO.COMPRAS_ESTATISTICA_PRODUTO AS EST ON (LINHA.COD_LOJA = EST.COD_LOJA AND LINHA.COD_PRODUTO = EST.COD_PRODUTO)
+			LEFT JOIN BI.dbo.BI_CAD_PRODUTO AS CP ON (LINHA.COD_PRODUTO = CP.COD_PRODUTO)
+			LEFT JOIN BI.dbo.BI_CAD_LOJA AS CL ON (LINHA.COD_LOJA = CL.COD_LOJA)
+			LEFT JOIN [192.168.0.6].[Zeus_Rtg].dbo.[TAB_PRODUTO_LOJA] AS PL ON (LINHA.COD_LOJA = PL.COD_LOJA AND LINHA.COD_PRODUTO = PL.COD_PRODUTO)
+			
+		LEFT JOIN
+		(
+		
+		SELECT
+			--ISNULL(s.DTA_SAIDA,CONVERT(DATE,@dataIni)) AS DTA_SAIDA,
+			s.COD_LOJA,
+			p.COD_PRODUTO AS COD_PRODUTO,
+			SUM((s.VAL_TOTAL_PRODUTO) - (s.QTD_TOTAL_PRODUTO * s.VAL_CUSTO_SICMS) - (CASE WHEN p.FLG_NAO_PIS_COFINS = 'N' THEN s.VAL_TOTAL_PRODUTO *(prm.VAL_PIS/100+prm.VAL_COFINS/100) ELSE 0 END) - ((CASE WHEN tri.TIPO_TRIBUTACAO <=2 THEN tri.val_icms*(1-val_reducao_base_calculo/100)/100 ELSE 0 END)*(s.VAL_TOTAL_PRODUTO))) AS LUCRO_BRUTO,
+			SUM(s.VAL_TOTAL_PRODUTO) as VENDA
+		FROM 
+		   [192.168.0.6].zeus_rtg.dbo.TAB_PRODUTO as p
+		   INNER JOIN [192.168.0.6].zeus_rtg.dbo.TAB_PRODUTO_SAIDA as s with (NOLOCK) 
+			ON(p.COD_PRODUTO = s.COD_PRODUTO) 
+		   INNER JOIN [192.168.0.6].zeus_rtg.dbo.TAB_PRODUTO_LOJA as l with (NOLOCK) 
+			ON(s.COD_LOJA = l.COD_LOJA) AND (s.COD_PRODUTO = l.COD_PRODUTO) 
+		   INNER JOIN [192.168.0.6].zeus_rtg.dbo.TAB_PARAMETRO_LOJA as prm with (NOLOCK) 
+			ON(l.COD_LOJA = prm.COD_LOJA) 
+		   INNER JOIN [192.168.0.6].zeus_rtg.dbo.TAB_TRIBUTACAO as tri with (NOLOCK) 
+			ON(l.COD_TRIBUTACAO = tri.COD_TRIBUTACAO) 
+			inner join BI.dbo.BI_TESTE_LINHA_PRODUTOS as linha on (linha.COD_LOJA = l.cod_loja and linha.COD_PRODUTO = l.cod_produto)
+		WHERE 1=1
+			AND p.FLG_GRADE_PRODUTO = 'N' 
+			AND s.QTD_TOTAL_PRODUTO <> 0.00
+			--and s.cod_loja = 1
+			--AND s.DTA_SAIDA  BETWEEN @dataIni AND @dataFim
+			AND year(s.DTA_SAIDA) = YEAR(getdate())
+			AND month(s.DTA_SAIDA) = month(getdate())
+		GROUP BY
+			--ISNULL(s.DTA_SAIDA,CONVERT(DATE,@dataIni)),
+			s.COD_LOJA,
+			p.COD_PRODUTO
+		) as TAB_LB ON (LINHA.COD_PRODUTO = TAB_LB.COD_PRODUTO AND LINHA.COD_LOJA = TAB_LB.COD_LOJA)
+				
+				
+WHERE 1 = 1
+	--and linha.cod_loja = 1
+group by
+	LINHA.COD_LOJA
+	,LINHA.COD_PRODUTO
+	,LINHA.COD_SECAO
+	,CP.NO_SECAO
+	,ISNULL(MOV.QTD_ESTOQUE,0)
+	,ISNULL(MOV.RUPTURA,1)
+	,CAST((EST.AVG_QTD_VENDA*PL.VAL_VENDA)/7 AS FLOAT)
+	,PL.VAL_VENDA

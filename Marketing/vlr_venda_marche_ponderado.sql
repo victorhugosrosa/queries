@@ -1,0 +1,41 @@
+SELECT
+	YEAR(data) ano
+	,MONTH(data) mes
+	,BI.dbo.fn_FormataVlr_Excel(AVG(VALOR_TOTAL/QTDE_PRODUTO)) avg_vlr_venda
+	,BI.dbo.fn_FormataVlr_Excel(SUM(VALOR_TOTAL)/SUM(QTDE_PRODUTO)) avg_vlr_venda
+FROM
+	BI.dbo.BI_VENDA_PRODUTO
+WHERE 1=1
+	AND CONVERT(DATE,DATA) BETWEEN CONVERT(DATE,'2013-01-01') AND CONVERT(DATE,'2015-10-28')
+	and COD_LOJA not in (7,26,29,33)
+	and QTDE_PRODUTO > 0
+GROUP BY
+	YEAR(data)
+	,MONTH(data)
+order by
+	YEAR(data)
+	,MONTH(data)
+
+
+SELECT
+	YEAR(data) ano
+	,MONTH(data) mes
+	,CP.CLASSIF_PRODUTO AS ABC
+	,BI.dbo.fn_FormataVlr_Excel(AVG(VALOR_TOTAL/QTDE_PRODUTO)) avg_vlr_venda
+	,BI.dbo.fn_FormataVlr_Excel(SUM(VALOR_TOTAL)/SUM(QTDE_PRODUTO)) vlr_venda_ponderado
+FROM
+	BI.dbo.BI_VENDA_PRODUTO AS VP
+	INNER JOIN BI.dbo.BI_CAD_PRODUTO AS CP
+		ON VP.COD_PRODUTO = CP.COD_PRODUTO
+WHERE 1=1
+	AND CONVERT(DATE,DATA) BETWEEN CONVERT(DATE,'2013-01-01') AND CONVERT(DATE,'2015-10-28')
+	and COD_LOJA not in (7,26,29,33)
+	and QTDE_PRODUTO > 0
+GROUP BY
+	YEAR(data)
+	,MONTH(data)
+	,CP.CLASSIF_PRODUTO
+order by
+	YEAR(data)
+	,MONTH(data)
+	,CP.CLASSIF_PRODUTO

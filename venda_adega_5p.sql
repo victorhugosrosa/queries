@@ -1,0 +1,209 @@
+DECLARE @DATA_INI_P1 AS DATE = '20140710'
+DECLARE @DATA_FIM_P1 AS DATE = '20140712'
+
+DECLARE @DATA_INI_P2 AS DATE = '20140717'
+DECLARE @DATA_FIM_P2 AS DATE = '20140719'
+
+DECLARE @DATA_INI_P3 AS DATE = '20140724'
+DECLARE @DATA_FIM_P3 AS DATE = '20140726'
+
+DECLARE @DATA_INI_P4 AS DATE = '20140731'
+DECLARE @DATA_FIM_P4 AS DATE = '20140802'
+
+DECLARE @DATA_INI_P5 AS DATE = '20140807'
+DECLARE @DATA_FIM_P5 AS DATE = '20140809'
+
+-- ----------------------------------------------------------------------------------------------------------------------------------------
+-- P1
+-- ----------------------------------------------------------------------------------------------------------------------------------------
+SELECT
+	CONVERT(VARCHAR,@DATA_INI_P1) + ' ATÉ ' + CONVERT(VARCHAR,@DATA_FIM_P1) AS P1
+	,VP.COD_LOJA
+	,L.NO_LOJA
+	,CP.PNP
+	,CP.NO_DEPARTAMENTO
+	,CP.NO_SECAO
+	--,CP.NO_GRUPO
+	--,CP.COD_PRODUTO
+	--,CP.DESCRICAO AS NO_PRODUTO
+	,BI.dbo.fn_FormataVlr_Excel(SUM(VP.VALOR_TOTAL)) AS VLR_VENDA
+	,BI.dbo.fn_FormataVlr_Excel(SUM(VP.QTDE_PRODUTO)) AS QTD_VENDA
+FROM
+	BI.DBO.BI_VENDA_PRODUTO AS VP
+	INNER JOIN BI.DBO.BI_CAD_PRODUTO AS CP
+		ON 1=1
+		AND VP.COD_PRODUTO = CP.COD_PRODUTO
+	INNER JOIN BI.dbo.BI_CAD_LOJA2 AS L
+		ON 1=1
+		AND VP.COD_LOJA = L.COD_LOJA
+WHERE 1=1
+	AND CONVERT(DATE,VP.DATA) BETWEEN CONVERT(DATE,@DATA_INI_P1) AND CONVERT(DATE,@DATA_FIM_P1)
+	AND VP.COD_LOJA = 7
+	AND CP.COD_DEPARTAMENTO = 2
+	--AND CP.COD_SECAO = 27
+GROUP BY
+	VP.COD_LOJA
+	,L.NO_LOJA
+	,CP.PNP
+	,CP.NO_DEPARTAMENTO
+	,CP.NO_SECAO
+	--,CP.NO_GRUPO
+	--,CP.COD_PRODUTO
+	--,CP.DESCRICAO AS NO_PRODUTO
+
+-- ----------------------------------------------------------------------------------------------------------------------------------------
+-- P2
+-- ----------------------------------------------------------------------------------------------------------------------------------------
+SELECT
+	CONVERT(VARCHAR,@DATA_INI_P2) + ' ATÉ ' + CONVERT(VARCHAR,@DATA_FIM_P2) AS P2
+	,VP.COD_LOJA
+	,L.NO_LOJA
+	,CP.PNP
+	,CP.NO_DEPARTAMENTO
+	,CP.NO_SECAO
+	--,CP.NO_GRUPO
+	--,CP.COD_PRODUTO
+	--,CP.DESCRICAO AS NO_PRODUTO
+	,BI.dbo.fn_FormataVlr_Excel(SUM(VP.VALOR_TOTAL)) AS VLR_VENDA
+	,BI.dbo.fn_FormataVlr_Excel(SUM(VP.QTDE_PRODUTO)) AS QTD_VENDA
+FROM
+	BI.DBO.BI_VENDA_PRODUTO AS VP
+	INNER JOIN BI.DBO.BI_CAD_PRODUTO AS CP
+		ON 1=1
+		AND VP.COD_PRODUTO = CP.COD_PRODUTO
+	INNER JOIN BI.dbo.BI_CAD_LOJA2 AS L
+		ON 1=1
+		AND VP.COD_LOJA = L.COD_LOJA
+WHERE 1=1
+	AND CONVERT(DATE,VP.DATA) BETWEEN CONVERT(DATE,@DATA_INI_P2) AND CONVERT(DATE,@DATA_FIM_P2)
+	AND VP.COD_LOJA = 7
+	AND CP.COD_DEPARTAMENTO = 2
+	--AND CP.COD_SECAO = 27
+GROUP BY
+	VP.COD_LOJA
+	,L.NO_LOJA
+	,CP.PNP
+	,CP.NO_DEPARTAMENTO
+	,CP.NO_SECAO
+	--,CP.NO_GRUPO
+	--,CP.COD_PRODUTO
+	--,CP.DESCRICAO AS NO_PRODUTO
+
+-- ----------------------------------------------------------------------------------------------------------------------------------------
+-- P3
+-- ----------------------------------------------------------------------------------------------------------------------------------------
+SELECT
+	CONVERT(VARCHAR,@DATA_INI_P3) + ' ATÉ ' + CONVERT(VARCHAR,@DATA_FIM_P3) AS P3
+	,VP.COD_LOJA
+	,L.NO_LOJA
+	,CP.PNP
+	,CP.NO_DEPARTAMENTO
+	,CP.NO_SECAO
+	--,CP.NO_GRUPO
+	--,CP.COD_PRODUTO
+	--,CP.DESCRICAO AS NO_PRODUTOO
+	,BI.dbo.fn_FormataVlr_Excel(SUM(VP.VALOR_TOTAL)) AS VLR_VENDA
+	,BI.dbo.fn_FormataVlr_Excel(SUM(VP.QTDE_PRODUTO)) AS QTD_VENDA
+FROM
+	BI.DBO.BI_VENDA_PRODUTO AS VP
+	INNER JOIN BI.DBO.BI_CAD_PRODUTO AS CP
+		ON 1=1
+		AND VP.COD_PRODUTO = CP.COD_PRODUTO
+	INNER JOIN BI.dbo.BI_CAD_LOJA2 AS L
+		ON 1=1
+		AND VP.COD_LOJA = L.COD_LOJA
+WHERE 1=1
+	AND CONVERT(DATE,VP.DATA) BETWEEN CONVERT(DATE,@DATA_INI_P3) AND CONVERT(DATE,@DATA_FIM_P3)
+	AND VP.COD_LOJA = 7
+	AND CP.COD_DEPARTAMENTO = 2
+	--AND CP.COD_SECAO = 27
+GROUP BY
+	VP.COD_LOJA
+	,L.NO_LOJA
+	,CP.PNP
+	,CP.NO_DEPARTAMENTO
+	,CP.NO_SECAO
+	--,CP.NO_GRUPO
+	--,CP.COD_PRODUTO
+	--,CP.DESCRICAO AS NO_PRODUTO
+
+-- ----------------------------------------------------------------------------------------------------------------------------------------
+-- P4
+-- ----------------------------------------------------------------------------------------------------------------------------------------
+SELECT
+	CONVERT(VARCHAR,@DATA_INI_P4) + ' ATÉ ' + CONVERT(VARCHAR,@DATA_FIM_P4) AS P4
+	,VP.COD_LOJA
+	,L.NO_LOJA
+	,CP.PNP
+	,CP.NO_DEPARTAMENTO
+	,CP.NO_SECAO
+	--,CP.NO_GRUPO
+	--,CP.COD_PRODUTO
+	--,CP.DESCRICAO AS NO_PRODUTO
+	,BI.dbo.fn_FormataVlr_Excel(SUM(VP.VALOR_TOTAL)) AS VLR_VENDA
+	,BI.dbo.fn_FormataVlr_Excel(SUM(VP.QTDE_PRODUTO)) AS QTD_VENDA
+FROM
+	BI.DBO.BI_VENDA_PRODUTO AS VP
+	INNER JOIN BI.DBO.BI_CAD_PRODUTO AS CP
+		ON 1=1
+		AND VP.COD_PRODUTO = CP.COD_PRODUTO
+	INNER JOIN BI.dbo.BI_CAD_LOJA2 AS L
+		ON 1=1
+		AND VP.COD_LOJA = L.COD_LOJA
+WHERE 1=1
+	AND CONVERT(DATE,VP.DATA) BETWEEN CONVERT(DATE,@DATA_INI_P4) AND CONVERT(DATE,@DATA_FIM_P4)
+	AND VP.COD_LOJA = 7
+	AND CP.COD_DEPARTAMENTO = 2
+	--AND CP.COD_SECAO = 27
+GROUP BY
+	VP.COD_LOJA
+	,L.NO_LOJA
+	,CP.PNP
+	,CP.NO_DEPARTAMENTO
+	,CP.NO_SECAO
+	--,CP.NO_GRUPO
+	--,CP.COD_PRODUTO
+	--,CP.DESCRICAO AS NO_PRODUTO
+
+-- ----------------------------------------------------------------------------------------------------------------------------------------
+-- P5
+-- ----------------------------------------------------------------------------------------------------------------------------------------
+SELECT
+	CONVERT(VARCHAR,@DATA_INI_P5) + ' ATÉ ' + CONVERT(VARCHAR,@DATA_FIM_P5) AS P5
+	,VP.COD_LOJA
+	,L.NO_LOJA
+	,CP.PNP
+	,CP.NO_DEPARTAMENTO
+	,CP.NO_SECAO
+	--,CP.NO_GRUPO
+	--,CP.COD_PRODUTO
+	--,CP.DESCRICAO AS NO_PRODUTO
+	,BI.dbo.fn_FormataVlr_Excel(SUM(VP.VALOR_TOTAL)) AS VLR_VENDA
+	,BI.dbo.fn_FormataVlr_Excel(SUM(VP.QTDE_PRODUTO)) AS QTD_VENDA
+FROM
+	BI.DBO.BI_VENDA_PRODUTO AS VP
+	INNER JOIN BI.DBO.BI_CAD_PRODUTO AS CP
+		ON 1=1
+		AND VP.COD_PRODUTO = CP.COD_PRODUTO
+	INNER JOIN BI.dbo.BI_CAD_LOJA2 AS L
+		ON 1=1
+		AND VP.COD_LOJA = L.COD_LOJA
+WHERE 1=1
+	AND CONVERT(DATE,VP.DATA) BETWEEN CONVERT(DATE,@DATA_INI_P5) AND CONVERT(DATE,@DATA_FIM_P5)
+	AND VP.COD_LOJA = 7
+	AND CP.COD_DEPARTAMENTO = 2
+	--AND CP.COD_SECAO = 27
+GROUP BY
+	VP.COD_LOJA
+	,L.NO_LOJA
+	,CP.PNP
+	,CP.NO_DEPARTAMENTO
+	,CP.NO_SECAO
+	--,CP.NO_GRUPO
+	--,CP.COD_PRODUTO
+	--,CP.DESCRICAO AS NO_PRODUTO
+
+
+
+
+

@@ -1,0 +1,361 @@
+/*
+CREATE TABLE BI.DBO.TAB_VENDA_ESTOQUE_ROBIN
+(
+	DATA DATE
+	,COD_LOJA INT
+	,COD_PRODUTO INT
+	,FORA_LINHA VARCHAR(5)
+	,ENVIA_PDV VARCHAR(5)
+	,VLR_TOTAL NUMERIC(18,2)
+	,QTD_TOTAL NUMERIC(18,2)
+	,AVG_VLR_U30D NUMERIC(18,2)
+	,AVG_QTD_U30D NUMERIC(18,2)
+	,QTD_ESTOQUE NUMERIC(18,2)
+	,RUPTURA NUMERIC(18,2)
+	,PRIMARY KEY (DATA, COD_LOJA, COD_PRODUTO)
+)
+
+TRUNCATE TABLE BI.DBO.TAB_VENDA_ESTOQUE_ROBIN
+*/
+SET NOCOUNT ON;
+DECLARE @DATA_INI AS DATE = CONVERT(DATE,'2015-02-01')
+DECLARE @DATA_FIM AS DATE = CONVERT(DATE,'2015-02-28')--CONVERT(DATE,'2015-04-30')
+
+-- ------------------------------------------------------------------------------------------------------
+-- INSERTING DATA. PROD/LOJA/DATA -> Populado CONVERT(DATE,'2015-01-01') - CONVERT(DATE,'2016-02-29')
+-- ------------------------b------------------------------------------------------------------------------
+/* 
+	INSERT INTO BI.DBO.TAB_VENDA_ESTOQUE_ROBIN
+	(
+		DATA
+		,COD_LOJA
+		,COD_PRODUTO
+	)
+	SELECT DISTINCT
+		L.DATA
+		,LP.COD_LOJA
+		,LP.COD_PRODUTO
+	FROM
+		BI.dbo.BI_LINHA_PRODUTOS AS LP
+		INNER JOIN BI.dbo.BI_CAD_SEMANA AS L
+			ON 1=1
+		INNER JOIN BI.DBO.SUPPLY_PRODUTO_RUPTURA AS PR
+			ON LP.COD_PRODUTO = PR.COD_PRODUTO
+	WHERE 1=1
+		AND CONVERT(DATE,L.DATA) BETWEEN CONVERT(DATE,@DATA_INI) AND CONVERT(DATE,@DATA_FIM)
+*/	
+-- ------------------------------------------------------------------------------------------------------
+-- UPDATING VENDA
+-- ------------------------------------------------------------------------------------------------------
+/*	
+	UPDATE VE
+	SET
+		VE.VLR_TOTAL = VP.VALOR_TOTAL
+		,VE.QTD_TOTAL = VP.QTDE_PRODUTO
+	FROM
+		BI.DBO.TAB_VENDA_ESTOQUE_ROBIN AS VE
+		INNER JOIN BI.dbo.BI_VENDA_PRODUTO AS VP
+			ON 1=1
+			AND VE.COD_LOJA = VP.COD_LOJA
+			AND VE.COD_PRODUTO = VP.COD_PRODUTO
+			AND VE.DATA = VP.DATA
+	WHERE 1=1
+		AND CONVERT(DATE,VP.DATA) BETWEEN CONVERT(DATE,@DATA_INI) AND CONVERT(DATE,@DATA_FIM)
+*/
+/*
+UPDATE VE
+	SET
+		VE.fora_linha = NULL
+	FROM
+		BI.DBO.TAB_VENDA_ESTOQUE_ROBIN AS VE
+	WHERE FORA_LINHA = 'N'
+
+*/
+-- ------------------------------------------------------------------------------------------------------
+-- UPDATING EST
+-- ------------------------------------------------------------------------------------------------------
+
+	UPDATE VE
+	SET
+		VE.QTD_ESTOQUE = EP.QTD_ESTOQUE
+	FROM
+		BI.DBO.TAB_VENDA_ESTOQUE_ROBIN AS VE
+		INNER JOIN DW.dbo.ESTOQUE AS EP
+			ON 1=1
+			AND VE.COD_LOJA = EP.COD_LOJA
+			AND VE.COD_PRODUTO = EP.COD_PRODUTO
+			AND VE.DATA = EP.DATA
+	WHERE 1=1
+		--AND VE.QTD_ESTOQUE IS NULL
+		AND CONVERT(DATE,EP.DATA) BETWEEN CONVERT(DATE,@DATA_INI) AND CONVERT(DATE,@DATA_FIM)
+		--AND CONVERT(DATE,EP.DATA) in
+		--(
+		--'2015-01-31'
+		--,'2015-02-28'
+		--,'2015-03-31'
+		--,'2015-04-30'
+		--,'2015-05-31'
+		--)
+		
+/*		
+		
+	DECLARE @DATA_INI AS DATE = CONVERT(DATE,'2015-01-01')
+	DECLARE @DATA_FIM AS DATE = CONVERT(DATE,'2016-04-30')
+		
+	UPDATE VE
+	SET
+		VE.QTD_ESTOQUE_ZEUS = EP.QTD_ESTOQUE
+	FROM
+		BI.DBO.TAB_VENDA_ESTOQUE_ROBIN AS VE
+		INNER JOIN [192.168.0.6].ZEUS_RTG.DBO.TAB_PRODUTO_MOVIMENTO AS EP
+			ON 1=1
+			AND VE.COD_LOJA = EP.COD_LOJA
+			AND VE.COD_PRODUTO = EP.COD_PRODUTO
+			AND CONVERT(DATE,VE.DATA) = CONVERT(DATE,EP.DTA_MOVIMENTO)
+	WHERE 1=1
+		AND VE.QTD_ESTOQUE IS NULL
+		AND CONVERT(DATE,EP.DTA_MOVIMENTO) BETWEEN CONVERT(DATE,@DATA_INI) AND CONVERT(DATE,@DATA_FIM)
+		
+	
+*/
+-- ------------------------------------------------------------------------------------------------------
+-- UPDATING FORA_LINHA
+-- ------------------------------------------------------------------------------------------------------
+/*
+UPDATE VE
+SET
+	VE.FORA_LINHA = AL.FORA_LINHA
+	,VE.ENVIA_PDV = AL.ENVIA_PDV
+FROM
+	[BI].[dbo].[TAB_VENDA_ESTOQUE_ROBIN] AS VE
+	LEFT JOIN [BI].[dbo].[BI_AUDITORIA_LINHA] AS AL
+		ON 1=1
+		AND AL.COD_PRODUTO = VE.COD_PRODUTO
+		AND AL.COD_LOJA = VE.COD_LOJA
+		AND AL.DTA_GRAVACAO = (SELECT MAX(DTA_GRAVACAO) FROM [BI].[dbo].[BI_AUDITORIA_LINHA] AS TAL WHERE TAL.COD_PRODUTO = VE.COD_PRODUTO AND TAL.COD_LOJA = VE.COD_LOJA AND TAL.DTA_GRAVACAO <= VE.DATA)
+WHERE 1=1
+	AND VE.FORA_LINHA IS NULL
+	--AND VE.COD_LOJA = 1
+	--AND VE.COD_PRODUTO = 43342
+	--AND CONVERT(DATE,VE.DATA) = CONVERT(DATE,'2015-01-02')
+*/
+-- ------------------------------------------------------------------------------------------------------
+-- UPDATING AVG
+-- ------------------------------------------------------------------------------------------------------
+/*
+	DECLARE @VAR_DATA DATE
+	DECLARE @VAR_COD_LOJA INT
+	DECLARE @VAR_COD_PRODUTO INT
+	
+	DECLARE @VAR_AVG_VLR_U30D NUMERIC(18,2)
+	DECLARE @VAR_AVG_QTD_U30D NUMERIC(18,2)	
+	
+	DECLARE nome_cursor CURSOR FOR 
+		SELECT DATA, COD_LOJA, COD_PRODUTO FROM BI.DBO.TAB_VENDA_ESTOQUE_ROBIN
+		WHERE 1=1
+			AND AVG_VLR_U30D IS NULL
+			AND CONVERT(DATE,DATA) BETWEEN CONVERT(DATE,@DATA_INI) AND CONVERT(DATE,@DATA_FIM)
+		ORDER BY DATA, COD_LOJA, COD_PRODUTO 
+		
+	OPEN nome_cursor
+	FETCH NEXT FROM nome_cursor 
+	INTO @VAR_DATA, @VAR_COD_LOJA, @VAR_COD_PRODUTO
+
+	WHILE @@FETCH_STATUS = 0
+	BEGIN
+		-- -------------------------------------------------------------------------------------
+		-- -------------------------------------------------------------------------------------
+			PRINT 'Atualizando AVG: Loja[' + convert(varchar,@VAR_COD_LOJA) + '] Data['+ convert(varchar,@VAR_DATA,101) + '] Plu[' + convert(varchar,@VAR_COD_PRODUTO) + ']'
+			
+			SELECT
+				@VAR_AVG_VLR_U30D = SUM(VALOR_TOTAL)/30
+				,@VAR_AVG_QTD_U30D = SUM(QTDE_PRODUTO)/30
+			FROM
+				BI.DBO.BI_VENDA_PRODUTO AS VP
+			WHERE 1=1
+				AND VP.COD_LOJA = @VAR_COD_LOJA
+				AND VP.COD_PRODUTO = @VAR_COD_PRODUTO
+				AND CONVERT(DATE,VP.DATA) BETWEEN CONVERT(DATE,DATEADD(D,-30,@VAR_DATA)) AND CONVERT(DATE,@VAR_DATA)
+				
+			UPDATE BI.DBO.TAB_VENDA_ESTOQUE_ROBIN 
+			SET 
+				AVG_VLR_U30D = @VAR_AVG_VLR_U30D
+				,AVG_QTD_U30D = @VAR_AVG_QTD_U30D
+			WHERE 1=1
+				AND COD_LOJA = @VAR_COD_LOJA
+				AND COD_PRODUTO = @VAR_COD_PRODUTO
+				AND DATA = @VAR_DATA			
+		-- -------------------------------------------------------------------------------------
+		-- -------------------------------------------------------------------------------------
+		FETCH NEXT FROM nome_cursor 
+		INTO @VAR_DATA, @VAR_COD_LOJA, @VAR_COD_PRODUTO
+	END 
+	CLOSE nome_cursor;
+	DEALLOCATE nome_cursor;
+*/
+-- ------------------------------------------------------------------------------------------------------
+-- UPDATING AVG 2
+-- ------------------------------------------------------------------------------------------------------
+/*
+	UPDATE VE
+	SET
+		VE.AVG_VLR_U30D = T.VLR_TOTAL/30
+		,VE.AVG_QTD_U30D = T.QTD_TOTAL/30
+	FROM
+		BI.DBO.TAB_VENDA_ESTOQUE_ROBIN AS VE
+		INNER JOIN
+		(
+			SELECT
+				YEAR(VP.DATA) AS ANO
+				,MONTH(VP.DATA) AS MES
+				,VP.COD_LOJA
+				,VP.COD_PRODUTO
+				,SUM(VALOR_TOTAL) AS VLR_TOTAL
+				,SUM(QTDE_PRODUTO) AS QTD_TOTAL
+			FROM
+				BI.dbo.BI_VENDA_PRODUTO AS VP
+				INNER JOIN BI.DBO.SUPPLY_PRODUTO_RUPTURA AS PR
+					ON VP.COD_PRODUTO = PR.COD_PRODUTO
+			WHERE 1=1	
+				AND CONVERT(DATE,VP.DATA) BETWEEN CONVERT(DATE,@DATA_INI) AND CONVERT(DATE,@DATA_FIM)
+			GROUP BY
+				YEAR(VP.DATA)
+				,MONTH(VP.DATA)
+				,VP.COD_LOJA
+				,VP.COD_PRODUTO
+		) AS T
+		ON 1=1
+		AND year(VE.DATA) = T.ANO
+		AND month(VE.data) = T.MES
+		AND VE.COD_LOJA = T.COD_LOJA
+		AND VE.COD_PRODUTO = T.COD_PRODUTO
+	where 1=1
+*/
+-- ------------------------------------------------------------------------------------------------------
+-- UPDATING AVG 180
+-- ------------------------------------------------------------------------------------------------------
+/*
+	UPDATE VE
+	SET
+		VE.AVG_QTD_U180D = T.AVG_QTD_U180D
+	FROM
+		BI.DBO.TAB_VENDA_ESTOQUE_ROBIN AS VE
+		INNER JOIN BI.dbo.TAB_MAX_DATE_AVG AS T
+		ON 1=1
+		AND year(VE.DATA) = T.ANO
+		AND month(VE.data) = T.MES
+		AND VE.COD_LOJA = T.COD_LOJA
+		AND VE.COD_PRODUTO = T.COD_PRODUTO
+	where 1=1
+		and VE.AVG_QTD_U180D is null
+*/
+-- -------------------------------------------------------------------------------------
+-- OLD
+-- -------------------------------------------------------------------------------------
+
+/*
+UPDATE VE
+SET
+	VE.VLR_TOTAL = T.VLR_TOTAL/30
+	,VE.QTD_TOTAL = T.QTD_TOTAL/30
+FROM
+	BI.DBO.TAB_VENDA_ESTOQUE_ROBIN AS VE
+	INNER JOIN
+	(
+		SELECT
+			YEAR(VP.DATA) AS ANO
+			,MONTH(VP.DATA) AS MES
+			,VP.COD_LOJA
+			,VP.COD_PRODUTO
+			,SUM(VALOR_TOTAL) AS VLR_TOTAL
+			,SUM(QTDE_PRODUTO) AS QTD_TOTAL
+		FROM
+			BI.dbo.BI_VENDA_PRODUTO AS VP
+			INNER JOIN BI.DBO.SUPPLY_PRODUTO_RUPTURA AS PR
+				ON VP.COD_PRODUTO = PR.COD_PRODUTO
+		WHERE 1=1	
+			AND CONVERT(DATE,VP.DATA) BETWEEN CONVERT(DATE,@DATA_INI) AND CONVERT(DATE,@DATA_FIM)
+		GROUP BY
+			YEAR(VP.DATA)
+			,MONTH(VP.DATA)
+			,VP.COD_LOJA
+			,VP.COD_PRODUTO
+	) AS T
+	ON 1=1
+	AND VE.ANO = T.ANO
+	AND VE.MES = T.MES
+	AND VE.COD_LOJA = T.COD_LOJA
+	AND VE.COD_PRODUTO = T.COD_PRODUTO
+	
+	
+UPDATE VE
+SET
+	VE.ESTOQUE = T.QTD_ESTOQUE
+FROM
+	BI.DBO.TAB_VENDA_ESTOQUE_ROBIN AS VE
+	INNER JOIN
+	(
+		SELECT
+			YEAR(EP.DATA) AS ANO
+			,MONTH(EP.DATA) AS MES
+			,EP.COD_LOJA
+			,EP.COD_PRODUTO
+			,EP.QTD_ESTOQUE
+		FROM
+			DW.dbo.ESTOQUE AS EP
+			INNER JOIN BI.DBO.SUPPLY_PRODUTO_RUPTURA AS PR
+				ON EP.COD_PRODUTO = PR.COD_PRODUTO
+		WHERE 1=1	
+			AND CONVERT(DATE,EP.DATA) in
+			(
+			'2015-01-31'
+			,'2015-02-28'
+			,'2015-03-31'
+			,'2015-04-30'
+			,'2015-05-31'
+			--,'2015-06-30'
+			--,'2015-07-31'
+			--,'2015-08-31'
+			--,'2015-09-30'
+			--,'2015-10-31'
+			--,'2015-11-30'
+			--,'2015-12-31'
+			--,'2016-01-31'
+			--,'2016-02-29'
+			)
+	) AS T
+	ON 1=1
+	AND VE.ANO = T.ANO
+	AND VE.MES = T.MES
+	AND VE.COD_LOJA = T.COD_LOJA
+	AND VE.COD_PRODUTO = T.COD_PRODUTO
+
+UPDATE VE
+SET
+	VE.ABC_SUPPLY = ABC.ABC_LOJA
+FROM
+	BI.DBO.TAB_VENDA_ESTOQUE_ROBIN AS VE
+	INNER JOIN BI.dbo.SUPPLY_PRODUTO_ABC_LOJA AS ABC
+		ON 1=1
+		AND VE.COD_PRODUTO = ABC.COD_PRODUTO
+		AND VE.COD_LOJA = ABC.COD_LOJA
+*/
+/*
+SELECT
+	VE.DATA
+	,VE.[COD_LOJA]
+	,VE.[COD_PRODUTO]
+	,LP.CLASSIF_PRODUTO_LOJA AS ABC_VENDA
+	,VE.[FORA_LINHA]
+	,CP.PNP
+	,BI.dbo.fn_FormataVlr_Excel(VE.[VLR_TOTAL]) AS [VLR_TOTAL]
+	,BI.dbo.fn_FormataVlr_Excel(VE.[QTD_TOTAL]) AS [QTD_TOTAL]
+	,BI.dbo.fn_FormataVlr_Excel(VE.QTD_ESTOQUE) AS [ESTOQUE]
+FROM
+	BI.DBO.TAB_VENDA_ESTOQUE_ROBIN AS VE
+	INNER JOIN BI.dbo.BI_LINHA_PRODUTOS AS LP
+		ON VE.COD_LOJA = LP.COD_LOJA
+		AND VE.COD_PRODUTO = LP.COD_PRODUTO
+	INNER JOIN BI.dbo.BI_CAD_PRODUTO AS CP
+		ON VE.COD_PRODUTO = CP.COD_PRODUTO
+*/

@@ -1,0 +1,88 @@
+		SET NOCOUNT ON;
+		DECLARE @TAB_QUEBRA_VENDA AS TABLE
+		(
+			COD_LOJA INT
+			,VLR_QUEBRA NUMERIC(18,2)
+			,QTD_QUEBRA NUMERIC(18,2)
+			,VLR_VENDA NUMERIC(18,2)
+			,PERC_QUEBRA NUMERIC(18,2)
+		);
+		INSERT INTO @TAB_QUEBRA_VENDA (COD_LOJA)
+		SELECT DISTINCT
+			COD_LOJA
+		FROM
+			BI.dbo.BI_CAD_LOJA2
+		WHERE 1=1
+			"<>maSqlIn["and COD_LOJA in",codLoja]<>"
+		
+		DECLARE @TAB_QUEBRA AS TABLE
+		(
+			COD_LOJA INT
+			,VLR_QUEBRA NUMERIC(18,2)
+			,QTD_QUEBRA NUMERIC(18,2)
+		);
+		INSERT INTO @TAB_QUEBRA
+		SELECT
+			QP.COD_LOJA as [Loja]
+			,SUM(QP.VLR_QUEBRA)*-1 as [Vlr Quebra]
+			,SUM(QP.QTD_QUEBRA)*-1 as [Qtd Quebra]	         
+		FROM
+			[BI].[dbo].[BI_QUEBRA_PRODUTO] QP
+		WHERE 1=1
+			"<>maSqlBetween["AND CONVERT(DATE,QP.DATA) between ",{dtIni,dtFim}]<>"
+			"<>maSqlIn["and QP.COD_PRODUTO in",codProd]<>"
+			"<>maSqlIn["and QP.COD_LOJA in",codLoja]<>"
+		GROUP BY QP.COD_LOJA;
+		
+		
+		DECLARE @TAB_VENDA AS TABLE
+		(
+			COD_LOJA INT
+			,VLR_VENDA NUMERIC(18,2)
+		);	
+		INSERT INTO @TAB_VENDA
+		SELECT
+			VP.COD_LOJA as [Loja]
+			,SUM(VP.VALOR_TOTAL) [Vlr Venda]         
+		FROM
+			[BI].[dbo].[BI_VENDA_PRODUTO] VP
+		WHERE 1=1
+			"<>maSqlBetween["AND CONVERT(DATE,VP.DATA) between ",{dtIni,dtFim}]<>"
+			"<>maSqlIn["and VP.COD_PRODUTO in",codProd]<>"
+			"<>maSqlIn["and VP.COD_LOJA in",codLoja]<>"
+		GROUP BY VP.COD_LOJA;
+		
+		UPDATE MAIN
+		SET
+			MAIN.VLR_QUEBRA = T.VLR_QUEBRA
+			,MAIN.QTD_QUEBRA = T.QTD_QUEBRA
+		FROM
+			@TAB_QUEBRA_VENDA AS MAIN
+			INNER JOIN @TAB_QUEBRA AS T
+				ON MAIN.COD_LOJA = T.COD_LOJA
+		
+		UPDATE MAIN
+		SET
+			MAIN.VLR_VENDA = T.VLR_VENDA
+		FROM
+			@TAB_QUEBRA_VENDA AS MAIN
+			INNER JOIN @TAB_VENDA AS T
+				ON MAIN.COD_LOJA = T.COD_LOJA
+		
+		UPDATE MAIN
+		SET
+			MAIN.PERC_QUEBRA = MAIN.VLR_QUEBRA / MAIN.VLR_VENDA
+		FROM
+			@TAB_QUEBRA_VENDA AS MAIN
+		
+		SELECT
+			COD_LOJA AS [Loja]
+			,VLR_QUEBRA AS [Vlr Quebra]
+			,QTD_QUEBRA AS [Qtd Quebra]
+			,VLR_VENDA AS [Vlr Venda]
+			,PERC_QUEBRA AS [%Quebra]
+		FROM 
+			@TAB_QUEBRA_VENDA
+			
+		
+	

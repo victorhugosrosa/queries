@@ -1,0 +1,196 @@
+DECLARE @DATA AS DATE = '2015-10-31'
+
+-- ---------------------------------------------------------------------------------------------------------------------------------------------
+-- TAB DADOS PASSADO
+-- ---------------------------------------------------------------------------------------------------------------------------------------------
+	DECLARE @TAB_PASSADO AS TABLE
+	(
+		DATA DATE
+		,COD_LOJA INT
+		,COD_PRODUTO INT
+		,AVG_QTD_U90D_PD NUMERIC(18,2)
+		,VLR_VENDA NUMERIC(18,2)
+		,VLR_OFERTA NUMERIC(18,2)
+		,VLR_VCMARCHE NUMERIC(18,2)
+	)
+	INSERT INTO @TAB_PASSADO (DATA,COD_LOJA,COD_PRODUTO)
+		SELECT
+			@DATA
+			,COD_LOJA
+			,COD_PRODUTO	
+		FROM
+			BI.DBO.BI_LINHA_PRODUTOS
+		WHERE 1=1
+			AND COD_DEPARTAMENTO IN (2,9,10,13,3,12,19)
+	
+-- ---------------------------------------------------------------------------------------------------------------------------------------------
+-- AVG U90D PASSADO
+-- ---------------------------------------------------------------------------------------------------------------------------------------------	
+	UPDATE TEMP
+	SET
+		TEMP.AVG_QTD_U90D_PD = TAB_VENDA.AVG_QTD_U90D_PD
+		,TEMP.VLR_VENDA = TAB_VENDA.VLR_VENDA
+	FROM
+		@TAB_PASSADO AS TEMP
+		INNER JOIN
+		(
+			SELECT
+				COD_LOJA
+				,COD_PRODUTO
+				,SUM(QTDE_PRODUTO)/90 AS AVG_QTD_U90D_PD
+				,sum(VALOR_TOTAL)/NULLIF(SUM(QTDE_PRODUTO),0) AS VLR_VENDA
+			FROM
+				BI.dbo.BI_VENDA_PRODUTO
+			WHERE 1=1
+				AND CONVERT(DATE,DATA) BETWEEN CONVERT(DATE,DATEADD(D,-90,@DATA)) AND CONVERT(DATE,DATEADD(D,-1,@DATA))
+			GROUP BY
+				COD_LOJA
+				,COD_PRODUTO
+		) AS TAB_VENDA	
+		ON 1=1
+		AND TEMP.COD_LOJA = TAB_VENDA.COD_LOJA
+		AND TEMP.COD_PRODUTO = TAB_VENDA.COD_PRODUTO
+
+-- ---------------------------------------------------------------------------------------------------------------------------------------------
+-- PV PO PVCM PASSADO
+-- ---------------------------------------------------------------------------------------------------------------------------------------------
+	/*
+	-- #############################
+	-- PRECO VENDA
+	-- #############################
+	DECLARE @TAB_PV AS TABLE
+	(
+		COD_LOJA INT
+		,COD_PRODUTO INT
+		,VLR_VENDA NUMERIC(18,2)
+	)
+
+	INSERT INTO @TAB_PV
+		SELECT
+			PV.COD_LOJA
+			,PV.COD_PRODUTO
+			,PV.VALOR AS VLR_VENDA_MARCHE
+		FROM
+			[BI].[DBO].[BI_PRECO_VENDA] AS PV
+		WHERE 1=1
+			AND PV.TIPO = 0
+			AND CONVERT(DATE,PV.DTA_INI) = (SELECT MAX(TPV.DTA_INI) FROM [BI].[DBO].[BI_PRECO_VENDA] AS TPV WHERE TPV.TIPO = 0 AND CONVERT(DATE,TPV.DTA_INI) <= CONVERT(DATE,@DATA) AND CONVERT(DATE,TPV.DTA_FIM) >= CONVERT(DATE,@DATA) and TPV.COD_LOJA = PV.COD_LOJA and TPV.COD_PRODUTO = PV.COD_PRODUTO)
+			AND CONVERT(DATE,PV.DTA_FIM) >= CONVERT(DATE,@DATA)
+	
+	-- #############################
+	-- PRECO OFERTA
+	-- #############################
+	DECLARE @TAB_PO AS TABLE
+	(
+		COD_LOJA INT
+		,COD_PRODUTO INT
+		,VLR_OFERTA NUMERIC(18,2)
+	)
+
+	INSERT INTO @TAB_PO
+		SELECT
+			PV.COD_LOJA
+			,PV.COD_PRODUTO
+			,PV.VALOR AS VLR_VENDA_MARCHE
+		FROM
+			[BI].[DBO].[BI_PRECO_VENDA] AS PV
+		WHERE 1=1
+			AND PV.TIPO = 1
+			AND CONVERT(DATE,PV.DTA_INI) = (SELECT MAX(TPV.DTA_INI) FROM [BI].[DBO].[BI_PRECO_VENDA] AS TPV WHERE TPV.TIPO = 1 AND CONVERT(DATE,TPV.DTA_INI) <= CONVERT(DATE,@DATA) AND CONVERT(DATE,TPV.DTA_FIM) >= CONVERT(DATE,@DATA) and TPV.COD_LOJA = PV.COD_LOJA and TPV.COD_PRODUTO = PV.COD_PRODUTO)
+			AND CONVERT(DATE,PV.DTA_FIM) >= CONVERT(DATE,@DATA)
+	
+	-- #############################
+	-- PRECO VC MARCHE
+	-- #############################
+	DECLARE @TAB_PVCM AS TABLE
+	(
+		COD_LOJA INT
+		,COD_PRODUTO INT
+		,VLR_VCMARCHE NUMERIC(18,2)
+	)
+
+	INSERT INTO @TAB_PVCM
+		SELECT
+			PV.COD_LOJA
+			,PV.COD_PRODUTO
+			,PV.VALOR AS VLR_VENDA_MARCHE
+		FROM
+			[BI].[DBO].[BI_PRECO_VENDA] AS PV
+		WHERE 1=1
+			AND PV.TIPO = 2
+			AND CONVERT(DATE,PV.DTA_INI) = (SELECT MAX(TPV.DTA_INI) FROM [BI].[DBO].[BI_PRECO_VENDA] AS TPV WHERE TPV.TIPO = 2 AND CONVERT(DATE,TPV.DTA_INI) <= CONVERT(DATE,@DATA) AND CONVERT(DATE,TPV.DTA_FIM) >= CONVERT(DATE,@DATA) and TPV.COD_LOJA = PV.COD_LOJA and TPV.COD_PRODUTO = PV.COD_PRODUTO)
+			AND CONVERT(DATE,PV.DTA_FIM) >= CONVERT(DATE,@DATA)
+	
+	-- #############################
+	-- UPDATES
+	-- #############################
+	UPDATE TEMP
+	SET
+		TEMP.VLR_VENDA = P.VLR_VENDA
+	FROM
+		@TAB_PASSADO AS TEMP
+		INNER JOIN @TAB_PV AS P
+			ON 1=1
+			AND TEMP.COD_LOJA = P.COD_LOJA
+			AND TEMP.COD_PRODUTO = P.COD_PRODUTO
+	
+	UPDATE TEMP
+	SET
+		TEMP.VLR_OFERTA = P.VLR_OFERTA
+	FROM
+		@TAB_PASSADO AS TEMP
+		INNER JOIN @TAB_PO AS P
+			ON 1=1
+			AND TEMP.COD_LOJA = P.COD_LOJA
+			AND TEMP.COD_PRODUTO = P.COD_PRODUTO
+	
+	UPDATE TEMP
+	SET
+		TEMP.VLR_VCMARCHE = P.VLR_VCMARCHE
+	FROM
+		@TAB_PASSADO AS TEMP
+		INNER JOIN @TAB_PVCM AS P
+			ON 1=1
+			AND TEMP.COD_LOJA = P.COD_LOJA
+			AND TEMP.COD_PRODUTO = P.COD_PRODUTO
+	*/
+-- ---------------------------------------------------------------------------------------------------------------------------------------------
+-- FINAL
+-- ---------------------------------------------------------------------------------------------------------------------------------------------
+SELECT
+	CONVERT(DATE,@DATA) AS DATA
+	,LP.COD_LOJA
+	,LP.COD_PRODUTO
+	,CP.DESCRICAO AS NO_PRODUTO
+	,CP.NO_DEPARTAMENTO
+	,CP.NO_SECAO
+	,CP.NO_GRUPO
+	,LP.CLASSIF_PRODUTO_LOJA
+	,BI.DBO.FN_FORMATAVLR_EXCEL(TP.VLR_VENDA) AS VLR_VENDA
+	--,BI.DBO.FN_FORMATAVLR_EXCEL(TP.VLR_OFERTA) AS VLR_OFERTA
+	--,BI.DBO.FN_FORMATAVLR_EXCEL(TP.VLR_VCMARCHE) AS VLR_VCMARCHE
+	,BI.DBO.FN_FORMATAVLR_EXCEL(TP.AVG_QTD_U90D_PD) AS AVG_QTD_U90D_PD
+	,BI.DBO.FN_FORMATAVLR_EXCEL(E.QTD_ESTOQUE) AS QTD_ESTOQUE
+FROM
+	BI.DBO.BI_LINHA_PRODUTOS AS LP
+	INNER JOIN BI.dbo.BI_CAD_PRODUTO AS CP
+		ON LP.COD_PRODUTO = CP.COD_PRODUTO	
+	LEFT JOIN @TAB_PASSADO AS TP
+		ON 1=1
+		AND LP.COD_PRODUTO = TP.COD_PRODUTO
+		AND LP.COD_LOJA = TP.COD_LOJA	
+	LEFT JOIN DW.dbo.ESTOQUE AS E
+		ON 1=1
+		AND LP.COD_PRODUTO = E.COD_PRODUTO
+		AND LP.COD_LOJA = E.COD_LOJA
+		AND CONVERT(DATE,E.DATA) = CONVERT(DATE,@DATA)
+WHERE 1=1
+	AND CP.COD_DEPARTAMENTO IN (2,9,10,13,3,12,19)
+	--AND LP.COD_LOJA not in (29,33,5)
+	AND (LP.FORA_LINHA = 'N' or (LP.FORA_LINHA = 'S' AND E.QTD_ESTOQUE>0))
+ORDER BY
+	LP.COD_LOJA
+	,CP.NO_DEPARTAMENTO
+	,CP.NO_SECAO
+	,CP.NO_GRUPO
+	,CP.DESCRICAO

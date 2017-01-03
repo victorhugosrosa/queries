@@ -1,0 +1,21 @@
+DECLARE @dataIni DATE;
+DECLARE @dataFim DATE;
+
+DECLARE @dataIniCHAR VARCHAR(8);
+DECLARE @dataFimCHAR VARCHAR(8);
+
+SET @dataIni = CONVERT(DATE,'20131002')
+SET @dataFim = CONVERT(DATE,'20131002')
+
+--SELECT @dataIni, @dataFim
+
+--SELECT CONVERT(VARCHAR,@dataIni,112), CONVERT(VARCHAR,@dataFim,112)
+
+
+WHILE @dataIni <= @dataFim
+BEGIN
+	SET @dataIniCHAR = CONVERT(VARCHAR,@dataIni,112)
+	
+	EXEC [BI].[dbo].[CARGA_QW11] @dataIniCHAR, @dataIniCHAR
+	SET @dataIni = DATEADD(DAY,1,@dataIni)
+END

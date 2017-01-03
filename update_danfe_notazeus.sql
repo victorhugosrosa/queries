@@ -1,0 +1,47 @@
+	-- -----------------------------------------------------------------------------
+	-- CRIANDO TABELA COM HISTORICO DE DANFES
+	-- -----------------------------------------------------------------------------
+	DECLARE @TAB_NFE AS TABLE
+	(
+		NUM_DANFE VARCHAR(50)
+		,NNF INT
+		,COD_FORNECEDOR INT
+	)
+
+	INSERT INTO @TAB_NFE
+	SELECT
+		IDE.NUM_DANFE
+		,IDE.NNF
+		,CF.COD_FORNECEDOR
+	FROM
+		[192.168.0.13].[CTRLNFE].[DBO].[NFE_IDE] AS IDE INNER JOIN [192.168.0.13].[CTRLNFE].[DBO].[NFE_DEST] AS DEST ON (IDE.NUM_DANFE = DEST.NUM_DANFE AND DEST.TIPO = 1)
+			INNER JOIN [192.168.0.13].[BI].DBO.[BI_CAD_FORNECEDOR] AS CF ON (DEST.CNPJ COLLATE SQL_LATIN1_GENERAL_CP1_CI_AS = CF.CGCCPF)
+	WHERE 1 = 1
+		AND CONVERT(DATE,IDE.DTGRAVACAO) >= CONVERT(DATE,GETDATE()-10)
+
+	-- -----------------------------------------------------------------------------
+	-- ATUALIZANDO NUM_DANFE [TAB_FORNECEDOR_NOTA]
+	-- -----------------------------------------------------------------------------
+	UPDATE FN
+	SET
+		FN.NUM_DANFE = NFE.NUM_DANFE
+	FROM
+		@TAB_NFE AS NFE	INNER JOIN [ZEUS_RTG].[DBO].[TAB_FORNECEDOR_NOTA] AS FN ON (NFE.COD_FORNECEDOR = FN.COD_FORNECEDOR AND NFE.NNF = FN.NUM_NF_FORN AND FN.NUM_DANFE IS NULL)
+	WHERE 1 = 1
+		--AND CONVERT(DATE,FN.DTA_GRAVACAO) = CONVERT(DATE,'20140401')
+
+	-- -----------------------------------------------------------------------------
+	-- CORRIGINDO ERRO DO ZEUS QUE SÓ ACEITA 6 DIGITOS NO NUMERO DA NF
+	-- -----------------------------------------------------------------------------
+	/*
+	UPDATE FN
+	SET
+		FN.NUM_DANFE = NFE.NUM_DANFE
+	FROM
+		@TAB_NFE AS NFE	INNER JOIN [ZEUS_RTG].[DBO].[TAB_FORNECEDOR_NOTA] AS FN ON (NFE.COD_FORNECEDOR = FN.COD_FORNECEDOR AND RIGHT(NFE.NNF,6) = FN.NUM_NF_FORN AND FN.NUM_DANFE IS NULL)
+	WHERE 1 = 1
+		AND CONVERT(DATE,FN.DTA_GRAVACAO) >= CONVERT(DATE,'20140101')
+	*/
+
+
+

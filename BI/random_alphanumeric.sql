@@ -1,0 +1,43 @@
+DECLARE @TAB_RANDOM AS TABLE
+(
+	CODIGO VARCHAR(20)
+);
+
+DECLARE @CONT AS INT = 1 
+
+WHILE(@CONT <= 500000)
+BEGIN
+
+	DECLARE @r varchar(20)
+
+	SELECT @r = coalesce(@r, '') +CHAR(
+	CASE WHEN r between 0 and 9 THEN 48
+	WHEN r between 10 and 35 THEN 55
+	ELSE 61 END + r)
+	FROM
+	master..spt_values
+	CROSS JOIN
+	(SELECT CAST(RAND(ABS(CHECKSUM(NEWID()))) *61 as int) r) a
+	WHERE type = 'P' AND number < 20
+
+
+	--select @r
+	INSERT INTO @TAB_RANDOM VALUES (UPPER(@r))
+	
+	SET @r = ''
+	
+	SET @CONT = @CONT + 1
+END
+
+SELECT * FROM @TAB_RANDOM
+
+SELECT
+	CODIGO
+	,COUNT(CODIGO)
+FROM
+	@TAB_RANDOM
+GROUP BY
+	CODIGO
+HAVING 
+	COUNT(CODIGO) > 1
+	
