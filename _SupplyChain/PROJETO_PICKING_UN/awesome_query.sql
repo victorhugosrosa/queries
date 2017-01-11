@@ -55,10 +55,10 @@
 			LEFT JOIN BI.DBO.BI_CAD_FORNECEDOR AS CF2
 				ON A.COD_FORNECEDOR = CF2.COD_FORNECEDOR
 		WHERE 1=1
-			AND CONVERT(DATE,P.DATA) >= CONVERT(DATE,GETDATE()) --TEMPORARIO
-			AND P.FLG_COMPRA = 1 --ALTERAR PARA FLG_PICKING_UN
+			AND P.FLG_PICKING_UN = 1
 			AND P.QTD_EMBALAGEM > 0
 			AND P.ID_SIMULADO = 17787--17703
+			AND CONVERT(DATE,P.DATA) >= CONVERT(DATE,GETDATE()) --TEMPORARIO
 
 -- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- AUXILIAR TABLE
