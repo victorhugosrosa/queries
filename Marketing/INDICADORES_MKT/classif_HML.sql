@@ -1,27 +1,27 @@
 	-- ----------------------------------------------------------------------------------------------
 	-- 
 	-- ----------------------------------------------------------------------------------------------
+	DECLARE @DATA_INI AS DATE = GETDATE()-9
 	DECLARE @DATA_FIM AS DATE = GETDATE()-1
 	DECLARE @CLUSTER AS VARCHAR(8) = 'STM'
 	DECLARE @H AS INT = 43
 	DECLARE @L AS INT = 12
 	
-	-- ----------------------------------------------------------------------------------------------
-	-- 
-	-- ----------------------------------------------------------------------------------------------
-	DECLARE @DATA_INI AS DATE = CONVERT(DATE,DATEADD(MONTH,-12,@DATA_FIM))
-	
+
 	-- ----------------------------------------------------------------------------------------------
 	-- CLASSIFICANDO HML
 	-- ----------------------------------------------------------------------------------------------
-	DECLARE @TAB_CPF AS TABLE
+	IF OBJECT_ID('TEMPDB.DBO.#TAB_CPF') IS NOT NULL DROP TABLE #TAB_CPF
+	
+	CREATE TABLE  #TAB_CPF
 	(
 		CPF NUMERIC(18,0)
 		,QTD_CUPOM INT
 		,HML VARCHAR(1)
+		,PRIMARY KEY (CPF)
 	)
 	
-	INSERT INTO @TAB_CPF
+	INSERT INTO #TAB_CPF
 	(
 		CPF
 		,QTD_CUPOM
@@ -38,12 +38,12 @@
 				ON VCC.COD_LOJA = L.COD_LOJA
 		WHERE 1=1
 			AND L.CLUSTER = @CLUSTER
-			AND CONVERT(DATE,VCC.DATA) BETWEEN CONVERT(DATE,DATEADD(MONTH,-12,@DATA_INI)) AND CONVERT(DATE,@DATA_FIM)
+			AND CONVERT(DATE,VCC.DATA) BETWEEN CONVERT(DATE,CONVERT(DATE,DATEADD(MONTH,-12,@DATA_FIM))) AND CONVERT(DATE,@DATA_FIM)
 			AND VCC.CPF IS NOT NULL
 		GROUP BY
 			VCC.CPF		
 	
-	UPDATE @TAB_CPF
+	UPDATE #TAB_CPF
 	SET
 		HML = (CASE
 					WHEN QTD_CUPOM <= @L THEN 'L'
@@ -56,6 +56,10 @@
 	-- ----------------------------------------------------------------------------------------------
 	-- 
 	-- ----------------------------------------------------------------------------------------------
+	-- ------------------------------
+	-- AJUDA 1
+	-- ------------------------------
+
 	SELECT
 		VCC.COD_LOJA
 		,HML.HML
@@ -63,6 +67,8 @@
 		,BI.dbo.fn_FormataVlr_Excel(SUM(VLR_CUPOM)) AS VLR_CUPOM
 		,BI.dbo.fn_FormataVlr_Excel(SUM(VCC.QTD_ITEM)) AS [# de SKUs]
 		,BI.dbo.fn_FormataVlr_Excel(AVG(VCC.QTD_ITEM)) AS [# de SKUs / compra]
+		,BI.dbo.fn_FormataVlr_Excel(SUM(VCC.QTD_ITEM_TOTAL)) AS [# de itens]
+		,BI.dbo.fn_FormataVlr_Excel(SUM(VCC.QTD_ITEM_TOTAL)/SUM(VCC.QTD_ITEM)) AS [# de itens / SKUs]
 	FROM
 		BI.dbo.BI_VENDA_CUPOM_CAPA AS VCC
 		--INNER JOIN BI.dbo.BI_VENDA_CUPOM_PRODUTO AS VCP
@@ -70,16 +76,51 @@
 		--	AND VCC.CUPOM_HASH = VCP.CUPOM_HASH
 		INNER JOIN BI.dbo.BI_CAD_LOJA2 AS L
 			ON VCC.COD_LOJA = L.COD_LOJA
-		INNER JOIN @TAB_CPF AS HML
+		INNER JOIN #TAB_CPF AS HML
 			ON VCC.CPF = HML.CPF
 	WHERE 1=1
 		AND L.CLUSTER = @CLUSTER
-		AND CONVERT(DATE,VCC.DATA) BETWEEN CONVERT(DATE,DATEADD(MONTH,-1,@DATA_INI)) AND CONVERT(DATE,@DATA_FIM)
+		AND CONVERT(DATE,VCC.DATA) BETWEEN CONVERT(DATE,@DATA_INI) AND CONVERT(DATE,@DATA_FIM)
 		AND VCC.CPF IS NOT NULL
 	GROUP BY
 		VCC.COD_LOJA
 		,HML.HML
+/*
+	-- ------------------------------
+	-- AJUDA 2
+	-- ------------------------------
+	SELECT
+		VCP.COD_LOJA
+		,HML.HML
+		,CP.NO_DEPARTAMENTO
+		--,BI.dbo.fn_FormataVlr_Excel(COUNT(DISTINCT CUPOM_HASH)) AS QTD_CUPOM
+		--,BI.dbo.fn_FormataVlr_Excel(SUM(VLR_VENDA)) AS VLR_CUPOM
+		,BI.dbo.fn_FormataVlr_Excel(SUM(VCP.QTDE_VENDA)) AS [# de itens]
+	FROM
+		BI.dbo.BI_VENDA_CUPOM_PRODUTO AS VCP
+		INNER JOIN BI.dbo.BI_CAD_LOJA2 AS L
+			ON VCP.COD_LOJA = L.COD_LOJA
+		INNER JOIN #TAB_CPF AS HML
+			ON VCP.CPF = HML.CPF
+		INNER JOIN BI.dbo.BI_CAD_PRODUTO AS CP
+			ON VCP.COD_PRODUTO = CP.COD_PRODUTO
+	WHERE 1=1
+		AND L.CLUSTER = @CLUSTER
+		AND CONVERT(DATE,VCP.DATA) BETWEEN CONVERT(DATE,DATEADD(MONTH,-1,@DATA_INI)) AND CONVERT(DATE,@DATA_FIM)
+		AND VCP.CPF IS NOT NULL
+	GROUP BY
+		VCP.COD_LOJA
+		,CP.NO_DEPARTAMENTO
+		,HML.HML
+*/	
 		
+		
+		
+		
+		
+		
+		
+	/*
 	-- -------------------------------------------------------------------------------------------------------------------------------------------------------
 	--
 	-- -------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -134,3 +175,4 @@
 		GROUP BY
 			COD_LOJA
 			,HML
+	*/
